@@ -8,7 +8,6 @@
     --text-dim: #a19bb1;
 }
 
-/* 1. Глобальные фиксы для мобилок */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -38,7 +37,7 @@ html, body {
 
 .hidden { display: none !important; }
 
-/* 2. РЕГИСТРАЦИЯ (ИМБА - НЕ ТРОГАЕМ) */
+/* --- РЕГИСТРАЦИЯ (ТВОЯ ИМБА) --- */
 #auth-screen {
     justify-content: center;
     align-items: center;
@@ -58,12 +57,6 @@ html, body {
     flex-direction: column;
     gap: 20px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    animation: fadeIn 0.5s ease-out;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .auth-header h1 {
@@ -84,6 +77,7 @@ html, body {
 
 .auth-form { display: flex; flex-direction: column; gap: 15px; }
 
+/* Те самые кнопки и инпуты из регистрации */
 .auth-form input {
     width: 100%;
     height: 55px;
@@ -98,10 +92,24 @@ html, body {
 
 .auth-buttons { display: flex; flex-direction: column; gap: 12px; }
 
-#btn-login { background: linear-gradient(135deg, var(--primary), #7b2ff7); color: white; }
-#btn-register.secondary { background: transparent; border: 1px solid var(--glass-border); color: white; }
+#btn-login { 
+    background: linear-gradient(135deg, var(--primary), #7b2ff7); 
+    color: white; 
+    height: 55px; 
+    border-radius: 16px;
+    border: none;
+    font-weight: 600;
+}
 
-/* 3. ИНТЕРФЕЙС ЧАТА (ИСПРАВЛЕНО) */
+#btn-register.secondary { 
+    background: transparent; 
+    border: 1px solid var(--glass-border); 
+    color: white; 
+    height: 55px;
+    border-radius: 16px;
+}
+
+/* --- ЭКРАН ЧАТОВ (ИДЕАЛЬНЫЙ) --- */
 #app-screen { display: flex; width: 100%; height: 100dvh; }
 
 .sidebar {
@@ -121,23 +129,16 @@ html, body {
     justify-content: space-between;
     align-items: center;
     background: rgba(0,0,0,0.3);
-    flex-shrink: 0;
 }
 
 .header-actions { display: flex; gap: 8px; }
 
-/* Стили для кнопок-иконок */
-.header-actions button, #btn-back {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+.header-actions button {
+    width: 38px; height: 38px;
+    border-radius: 10px;
     background: var(--glass);
     border: 1px solid var(--glass-border);
     color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
 }
 
 .chat-list { flex: 1; overflow-y: auto; }
@@ -145,10 +146,7 @@ html, body {
 .chat-item {
     padding: 15px 20px;
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    cursor: pointer;
 }
-
-.chat-item:active { background: var(--primary); }
 
 /* ОКНО СООБЩЕНИЙ */
 .chat-area {
@@ -167,84 +165,58 @@ html, body {
     align-items: center;
     background: rgba(0,0,0,0.4);
     border-bottom: 1px solid var(--glass-border);
-    flex-shrink: 0;
+}
+
+#btn-back {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    margin-right: 15px;
+    display: none; /* Скрыта на десктопе */
 }
 
 .messages-container {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-bottom: 100px; /* Чтобы сообщения не прятались за инпутом */
+    padding-bottom: 90px;
 }
 
-.msg {
-    max-width: 80%;
-    padding: 12px 16px;
-    border-radius: 18px;
-    font-size: 0.95rem;
-    word-wrap: break-word;
-}
-
-.msg.sent { align-self: flex-end; background: var(--primary); border-bottom-right-radius: 4px; }
-.msg.received { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
-
-/* ПАНЕЛЬ ВВОДА (ЖЕСТКО ВНИЗУ) */
 .message-input-area {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 85px;
+    bottom: 0; width: 100%;
+    height: 80px;
     padding: 15px;
     display: flex;
-    align-items: center;
     gap: 10px;
     background: rgba(15, 10, 30, 0.95);
-    backdrop-filter: blur(15px);
     border-top: 1px solid var(--glass-border);
-    z-index: 30;
 }
 
 .message-input-area input {
-    flex: 1;
-    height: 50px;
+    flex: 1; height: 50px;
     background: rgba(255,255,255,0.08);
     border: 1px solid var(--glass-border);
     border-radius: 15px;
     padding: 0 15px;
     color: white;
-    font-size: 16px;
 }
 
 .message-input-area button {
-    width: 50px;
-    height: 50px;
+    width: 50px; height: 50px;
     border-radius: 15px;
     background: var(--primary);
-    color: white;
-    flex-shrink: 0;
+    border: none; color: white;
 }
 
 /* МОБИЛКИ */
 @media (max-width: 768px) {
+    #btn-back { display: block; }
     .sidebar {
-        position: absolute;
-        width: 100%;
-        left: 0;
-        transition: 0.3s ease;
+        position: absolute; width: 100%; left: 0;
+        transition: transform 0.3s ease;
     }
-    
     #app-screen.chat-open .sidebar { transform: translateX(-100%); }
-
-    .chat-area {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        left: 0;
-    }
-
-    #btn-back { display: flex; margin-right: 10px; border: none; background: none; }
+    .chat-area { position: absolute; width: 100%; height: 100%; left: 0; }
 }
