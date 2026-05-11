@@ -2,7 +2,6 @@
     --bg: #12081d;
     --accent: #9d50bb;
     --accent-light: #6a11cb;
-    --glass: rgba(255, 255, 255, 0.05);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-appearance: none; }
@@ -12,8 +11,8 @@ body, html {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    position: fixed; /* Запрет сдвига экрана */
-    font-family: sans-serif;
+    position: fixed;
+    font-family: 'Inter', sans-serif;
     color: white;
 }
 
@@ -27,8 +26,7 @@ body, html {
     justify-content: center;
     align-items: center;
     background: radial-gradient(circle, #2d1b4e 0%, #12081d 100%);
-    position: absolute;
-    top: 0; left: 0; z-index: 100;
+    z-index: 100;
 }
 
 .glass-card {
@@ -36,34 +34,46 @@ body, html {
     padding: 30px;
     border-radius: 20px;
     border: 1px solid rgba(255,255,255,0.1);
-    width: 90%;
-    max-width: 350px;
+    width: 85%;
+    max-width: 340px;
     text-align: center;
     backdrop-filter: blur(10px);
 }
 
-.logo { margin-bottom: 20px; letter-spacing: 3px; }
+.logo { margin-bottom: 25px; letter-spacing: 4px; font-size: 24px; }
 
 input {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     margin: 8px 0;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    color: white;
-    font-size: 16px; /* Фикс зума на iOS/Android */
+    background: rgba(0,0,0,0.4) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px;
+    color: white !important;
+    font-size: 16px;
 }
 
 .btn-primary {
     background: linear-gradient(135deg, var(--accent-light), var(--accent)) !important;
-    color: white;
-    padding: 14px;
+    color: white !important;
+    padding: 15px;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     width: 100%;
     font-weight: bold;
     margin-top: 10px;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: rgba(255,255,255,0.05) !important;
+    color: white !important;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 12px;
+    width: 100%;
+    margin-top: 12px;
+    cursor: pointer;
 }
 
 /* МЕССЕНДЖЕР */
@@ -71,13 +81,11 @@ input {
     display: flex;
     height: 100%;
     width: 100%;
-    position: absolute;
-    top: 0; left: 0; z-index: 50;
 }
 
 .sidebar {
     width: 70px;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.4);
     border-right: 1px solid rgba(255,255,255,0.1);
     display: flex;
     flex-direction: column;
@@ -87,16 +95,15 @@ input {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: var(--bg);
 }
 
 .sidebar-header, .chat-header {
     height: 60px;
+    background: rgba(255,255,255,0.03);
     border-bottom: 1px solid rgba(255,255,255,0.1);
     display: flex;
     align-items: center;
     padding: 0 10px;
-    background: rgba(255,255,255,0.02);
 }
 
 .messages-display {
@@ -108,26 +115,23 @@ input {
     gap: 10px;
 }
 
-/* НИЖНЯЯ ПАНЕЛЬ */
 .input-area {
-    height: 70px;
+    height: 75px;
     background: #1e1135;
     display: flex;
-    padding: 10px;
+    padding: 12px;
     gap: 10px;
     border-top: 1px solid rgba(255,255,255,0.1);
 }
 
 #btn-send {
     background: var(--accent) !important;
-    color: white;
-    border: none;
-    padding: 0 15px;
+    color: white !important;
     border-radius: 10px;
+    padding: 0 15px;
+    font-weight: bold;
 }
 
-/* ПК ВЕРСИЯ */
 @media (min-width: 768px) {
     .sidebar { width: 280px; }
-    .search-bar input { display: block; }
 }
