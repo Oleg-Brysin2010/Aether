@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -8,8 +8,7 @@ const firebaseConfig = {
     projectId: "aether-1a555",
     storageBucket: "aether-1a555.firebasestorage.app",
     messagingSenderId: "798141171445",
-    appId: "1:798141171445:web:ba604aee38141e14d727bc",
-    measurementId: "G-707FP0H10M"
+    appId: "1:798141171445:web:ba604aee38141e14d727bc"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -18,12 +17,22 @@ const db = getFirestore(app);
 
 let currentUser = null;
 let activeChatId = null;
-let unsubscribeMessages = null; // Для очистки старых подписок
+let unsubscribeMessages = null;
+let typingTimeout = null;
 
-// --- ЛОГИКА ВХОДА ---
+// СТАТУС В СЕТИ
+const updateStatus = (state) => {
+    if (!currentUser) return;
+    setDoc(doc(db, "status", currentUser.email.replace(/\./g, ',')), {
+        state: state,
+        last_changed: serverTimestamp()
+    }, { merge: true });
+};
+
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
+        updateStatus("online");
         document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('app-screen').classList.remove('hidden');
         loadChats();
@@ -33,52 +42,64 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// --- СОЗДАНИЕ ЧАТА ---
-document.getElementById('btn-create-chat').onclick = async () => {
-    const email = prompt("Введите Email друга:");
-    if (!email || email === currentUser.email) return;
+window.addEventListener('beforeunload', () => updateStatus("offline"));
 
+// СОЗДАНИЕ ЧАТА
+document.getElementById('btn-create-chat').onclick = async () => {
+    const email = prompt("Email друга:");
+    if (!email || email === currentUser.email) return;
     const chatId = [currentUser.email, email].sort().join('_').replace(/\./g, ',');
-    
     await setDoc(doc(db, "chats", chatId), {
         users: [currentUser.email, email],
         lastTimestamp: serverTimestamp()
     }, { merge: true });
-    
-    alert("Чат создан! Выберите его в списке.");
 };
 
-// --- ЗАГРУЗКА СПИСКА ЧАТОВ ---
+// СПИСОК ЧАТОВ С ЗЕЛЕНЫМИ КРУЖКАМИ
 function loadChats() {
     const q = query(collection(db, "chats"), where("users", "array-contains", currentUser.email));
     onSnapshot(q, (snap) => {
-        const chatList = document.getElementById('chat-list');
-        chatList.innerHTML = '';
+        const list = document.getElementById('chat-list');
+        list.innerHTML = '';
         snap.forEach(d => {
-            const data = d.data();
-            const friendEmail = data.users.find(u => u !== currentUser.email);
+            const friend = d.data().users.find(u => u !== currentUser.email);
+            const friendId = friend.replace(/\./g, ',');
             const item = document.createElement('div');
             item.className = 'chat-item';
-            item.innerHTML = `<strong>${friendEmail}</strong>`;
-            item.onclick = () => openChat(d.id, friendEmail);
-            chatList.appendChild(item);
+            item.innerHTML = `
+                <div class="chat-item-content">
+                    <div id="dot-${friendId}" class="status-dot"></div>
+                    <strong>${friend}</strong>
+                </div>`;
+            item.onclick = () => openChat(d.id, friend);
+            list.appendChild(item);
+
+            onSnapshot(doc(db, "status", friendId), (sDoc) => {
+                const dot = document.getElementById(`dot-${friendId}`);
+                if (dot) dot.style.background = sDoc.data()?.state === "online" ? "#2ecc71" : "#95a5a6";
+            });
         });
     });
 }
 
-// --- ОТКРЫТИЕ ЧАТА ---
+// ОТКРЫТИЕ ЧАТА И ПЕЧАТЬ
 function openChat(id, name) {
     activeChatId = id;
     document.getElementById('app-screen').classList.add('chat-open');
-    document.getElementById('active-chat').classList.remove('hidden');
-    document.getElementById('no-chat-selected').classList.add('hidden');
     document.getElementById('chat-with-name').innerText = name;
 
-    // Отписываемся от сообщений предыдущего чата, если он был открыт
     if (unsubscribeMessages) unsubscribeMessages();
 
+    // Слушаем "Печатает..."
+    onSnapshot(collection(db, "chats", id, "typing"), (snap) => {
+        let typing = false;
+        snap.forEach(t => {
+            if (t.id !== currentUser.email.replace(/\./g, ',') && t.data().isTyping) typing = true;
+        });
+        document.getElementById('typing-indicator').innerText = typing ? "печатает..." : "";
+    });
+
     const q = query(collection(db, "chats", id, "messages"), orderBy("timestamp", "asc"));
-    
     unsubscribeMessages = onSnapshot(q, (snap) => {
         const container = document.getElementById('messages-container');
         container.innerHTML = '';
@@ -89,32 +110,37 @@ function openChat(id, name) {
             div.innerText = m.text;
             container.appendChild(div);
         });
-        container.scrollTop = container.scrollHeight; // Авто-скролл вниз
+        container.scrollTop = container.scrollHeight;
     });
 }
 
-// --- ОТПРАВКА СООБЩЕНИЯ ---
+// ВВОД И АВТО-ЭМОДЗИ
+document.getElementById('message-input').oninput = () => {
+    if (!activeChatId) return;
+    setDoc(doc(db, "chats", activeChatId, "typing", currentUser.email.replace(/\./g, ',')), { isTyping: true });
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        setDoc(doc(db, "chats", activeChatId, "typing", currentUser.email.replace(/\./g, ',')), { isTyping: false });
+    }, 2000);
+};
+
 document.getElementById('message-form').onsubmit = async (e) => {
     e.preventDefault();
     const input = document.getElementById('message-input');
-    const text = input.value.trim();
-
+    let text = input.value.trim();
     if (!text || !activeChatId) return;
 
-    input.value = ''; // Очищаем сразу для скорости
+    text = text.replace(':)', '😊').replace('<3', '❤️').replace(':(', '😟');
+    input.value = '';
 
-    try {
-        await addDoc(collection(db, "chats", activeChatId, "messages"), {
-            text: text,
-            sender: currentUser.email,
-            timestamp: serverTimestamp()
-        });
-    } catch (err) {
-        console.error("Ошибка отправки:", err);
-    }
+    await addDoc(collection(db, "chats", activeChatId, "messages"), {
+        text: text,
+        sender: currentUser.email,
+        timestamp: serverTimestamp()
+    });
+    setDoc(doc(db, "chats", activeChatId, "typing", currentUser.email.replace(/\./g, ',')), { isTyping: false });
 };
 
-// Кнопка Назад
 document.getElementById('btn-back').onclick = () => {
     document.getElementById('app-screen').classList.remove('chat-open');
 };
