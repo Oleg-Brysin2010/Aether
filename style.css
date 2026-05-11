@@ -18,14 +18,13 @@
 
 html, body {
     width: 100%;
-    height: 100dvh; /* Динамическая высота */
+    height: 100dvh;
     background: var(--bg-dark);
     color: var(--text);
     font-family: 'Roboto', sans-serif;
-    overflow: hidden; /* Запрещаем тряску экрана */
+    overflow: hidden;
 }
 
-/* 2. Контейнер экранов */
 .screen {
     width: 100%;
     height: 100dvh;
@@ -39,7 +38,7 @@ html, body {
 
 .hidden { display: none !important; }
 
-/* 3. СТИЛЬНАЯ КАРТОЧКА АВТОРИЗАЦИИ (ТВОЯ ИМБА) */
+/* 2. РЕГИСТРАЦИЯ (ИМБА - НЕ ТРОГАЕМ) */
 #auth-screen {
     justify-content: center;
     align-items: center;
@@ -83,14 +82,9 @@ html, body {
     margin-bottom: 10px;
 }
 
-.auth-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
+.auth-form { display: flex; flex-direction: column; gap: 15px; }
 
-/* 4. ИНПУТЫ */
-input {
+.auth-form input {
     width: 100%;
     height: 55px;
     background: var(--glass);
@@ -98,58 +92,21 @@ input {
     border-radius: 16px;
     padding: 0 20px;
     color: #fff;
-    font-size: 16px; 
+    font-size: 16px;
     outline: none;
-    transition: 0.3s;
 }
 
-input:focus {
-    border-color: var(--primary);
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 4px rgba(157, 80, 187, 0.2);
-}
+.auth-buttons { display: flex; flex-direction: column; gap: 12px; }
 
-/* 5. КНОПКИ */
-.auth-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 10px;
-}
+#btn-login { background: linear-gradient(135deg, var(--primary), #7b2ff7); color: white; }
+#btn-register.secondary { background: transparent; border: 1px solid var(--glass-border); color: white; }
 
-button {
-    height: 55px;
-    border: none;
-    border-radius: 16px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#btn-login {
-    background: linear-gradient(135deg, var(--primary), #7b2ff7);
-    color: white;
-    box-shadow: 0 10px 20px -5px rgba(157, 80, 187, 0.4);
-}
-
-#btn-register.secondary {
-    background: transparent;
-    border: 1px solid var(--glass-border);
-    color: white;
-}
-
-button:active { transform: scale(0.97); }
-
-/* 6. ИНТЕРФЕЙС ЧАТА (ФИКС СТРУКТУРЫ) */
-#app-screen { display: flex; }
+/* 3. ИНТЕРФЕЙС ЧАТА (ИСПРАВЛЕНО) */
+#app-screen { display: flex; width: 100%; height: 100dvh; }
 
 .sidebar {
     width: 320px;
-    background: rgba(20, 15, 35, 0.8);
+    background: rgba(15, 10, 30, 0.9);
     border-right: 1px solid var(--glass-border);
     display: flex;
     flex-direction: column;
@@ -159,42 +116,47 @@ button:active { transform: scale(0.97); }
 
 .sidebar-header {
     height: 70px;
-    padding: 0 20px;
+    padding: 0 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.3);
     flex-shrink: 0;
 }
 
 .header-actions { display: flex; gap: 8px; }
 
-.header-actions button {
-    width: 38px;
-    height: 38px;
+/* Стили для кнопок-иконок */
+.header-actions button, #btn-back {
+    width: 40px;
+    height: 40px;
     border-radius: 12px;
     background: var(--glass);
-    font-size: 0.9rem;
+    border: 1px solid var(--glass-border);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
 .chat-list { flex: 1; overflow-y: auto; }
 
 .chat-item {
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--glass-border);
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     cursor: pointer;
 }
 
-.chat-item:hover { background: var(--glass); }
-.chat-item strong { display: block; font-size: 0.95rem; margin-bottom: 4px; }
-.chat-item small { color: var(--text-dim); font-size: 0.8rem; }
+.chat-item:active { background: var(--primary); }
 
-/* 7. ОКНО СООБЩЕНИЙ */
+/* ОКНО СООБЩЕНИЙ */
 .chat-area {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: rgba(255,255,255,0.01);
+    height: 100dvh;
+    background: rgba(0,0,0,0.2);
     position: relative;
 }
 
@@ -203,7 +165,7 @@ button:active { transform: scale(0.97); }
     padding: 0 20px;
     display: flex;
     align-items: center;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.4);
     border-bottom: 1px solid var(--glass-border);
     flex-shrink: 0;
 }
@@ -215,6 +177,7 @@ button:active { transform: scale(0.97); }
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding-bottom: 100px; /* Чтобы сообщения не прятались за инпутом */
 }
 
 .msg {
@@ -222,34 +185,56 @@ button:active { transform: scale(0.97); }
     padding: 12px 16px;
     border-radius: 18px;
     font-size: 0.95rem;
-    line-height: 1.4;
+    word-wrap: break-word;
 }
 
 .msg.sent { align-self: flex-end; background: var(--primary); border-bottom-right-radius: 4px; }
 .msg.received { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
 
-/* ЗОНА ВВОДА */
+/* ПАНЕЛЬ ВВОДА (ЖЕСТКО ВНИЗУ) */
 .message-input-area {
-    height: 80px;
-    padding: 0 20px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 85px;
+    padding: 15px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    background: rgba(15, 10, 30, 0.9);
+    gap: 10px;
+    background: rgba(15, 10, 30, 0.95);
+    backdrop-filter: blur(15px);
     border-top: 1px solid var(--glass-border);
+    z-index: 30;
+}
+
+.message-input-area input {
+    flex: 1;
+    height: 50px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 0 15px;
+    color: white;
+    font-size: 16px;
+}
+
+.message-input-area button {
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    background: var(--primary);
+    color: white;
     flex-shrink: 0;
 }
 
-.message-input-area input { height: 48px; flex: 1; }
-.message-input-area button { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; }
-
-/* 8. МОБИЛЬНАЯ АДАПТАЦИЯ */
+/* МОБИЛКИ */
 @media (max-width: 768px) {
     .sidebar {
         position: absolute;
         width: 100%;
-        max-width: none;
-        transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        left: 0;
+        transition: 0.3s ease;
     }
     
     #app-screen.chat-open .sidebar { transform: translateX(-100%); }
@@ -261,11 +246,5 @@ button:active { transform: scale(0.97); }
         left: 0;
     }
 
-    #btn-back {
-        background: none;
-        width: 40px;
-        height: 40px;
-        margin-right: 10px;
-        font-size: 1.2rem;
-    }
+    #btn-back { display: flex; margin-right: 10px; border: none; background: none; }
 }
