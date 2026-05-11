@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Aether Messenger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0a1e;
+            --primary: #9d50bb;
+            --primary-light: #bc78ec;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --text: #ffffff;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            margin: 0; padding: 0; 
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body { width: 100%; height: 100dvh; background: var(--bg-dark); color: var(--text); font-family: 'Roboto', sans-serif; overflow: hidden; position: fixed; }
+
+        .screen { width: 100%; height: 100dvh; display: flex; position: fixed; top: 0; left: 0; background: radial-gradient(circle at top right, #2d1b4e, #0f0a1e); z-index: 10; }
+        .hidden { display: none !important; }
+
+        /* АВТОРИЗАЦИЯ - ИСПРАВЛЕННЫЕ КНОПКИ */
+        #auth-screen { justify-content: center; align-items: center; padding: 20px; }
+        .auth-card {
+            background: rgba(45, 27, 78, 0.4);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            padding: 35px 25px; border-radius: 32px;
+            width: 100%; max-width: 340px;
+            display: flex; flex-direction: column; gap: 20px;
+            text-align: center;
+        }
+        .auth-header h1 { font-size: 2.8rem; background: linear-gradient(to bottom, #fff, var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        .auth-form { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+        
+        input { 
+            width: 100%; height: 55px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 18px; 
+            padding: 0 15px; color: #fff; font-size: 16px; outline: none;
+            user-select: text !important; -webkit-user-select: text !important; 
+        }
+        .btn-main { width: 100%; height: 55px; background: linear-gradient(135deg, var(--primary), #7b2ff7); border: none; border-radius: 18px; color: white; font-weight: 600; cursor: pointer; font-size: 16px; }
+        .btn-sec { width: 100%; background: transparent; border: 1px solid var(--glass-border); color: #fff; height: 50px; border-radius: 18px; cursor: pointer; font-size: 14px; }
+
+        /* ПРИЛОЖЕНИЕ */
+        #app-screen { display: flex; position: relative; width: 100%; height: 100dvh; overflow: hidden; }
+
+        .sidebar { 
+            width: 100%; height: 100%; position: absolute; left: 0; top: 0;
+            background: var(--bg-dark); border-right: 1px solid var(--glass-border);
+            display: flex; flex-direction: column; transition: transform 0.3s ease-in-out; z-index: 20;
+        }
+        #app-screen.chat-open .sidebar { transform: translateX(-100%); }
+
+        .sidebar-header { height: 70px; padding: 0 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); }
+        .chat-list { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 20px; }
+        
+        .chat-item { 
+            padding: 15px; border-radius: 18px; margin-bottom: 8px; background: rgba(255,255,255,0.03); 
+            display: flex; align-items: center; justify-content: space-between; border: 1px solid transparent; cursor: pointer;
+        }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #95a5a6; border: 2px solid #0f0a1e; }
+        .btn-del { color: #ff4757; padding: 10px; font-size: 1.2rem; opacity: 0.6; }
+
+        /* ПРОФИЛЬ И НОВАЯ ИКОНКА НАСТРОЕК */
+        .user-profile-bar {
+            height: 75px; background: rgba(255,255,255,0.05); border-top: 1px solid var(--glass-border);
+            display: flex; align-items: center; padding: 0 15px; gap: 12px; cursor: pointer;
+        }
+        .avatar-circle { width: 42px; height: 42px; border-radius: 50%; background: var(--glass-border); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .user-info { flex: 1; overflow: hidden; }
+        .user-info .name { font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .user-info .status { font-size: 0.75rem; color: #2ecc71; }
+        
+        /* Графическая шестеренка вместо эмодзи */
+        .settings-icon {
+            width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.4); border-radius: 50%;
+            position: relative; display: inline-block;
+        }
+        .settings-icon::before {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 6px; height: 6px; background: rgba(255,255,255,0.4); border-radius: 50%;
+        }
+
+        /* МОДАЛКА */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .modal-content {
+            background: #1a142e; border: 1px solid var(--glass-border); width: 90%; max-width: 320px;
+            padding: 30px 25px; border-radius: 28px; text-align: center; display: flex; flex-direction: column; gap: 15px;
+        }
+
+        /* ЧАТ */
+        .chat-area { width: 100%; height: 100%; position: absolute; left: 0; top: 0; display: flex; flex-direction: column; background: var(--bg-dark); z-index: 10; }
+        .chat-header { height: 70px; padding: 0 15px; display: flex; align-items: center; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--glass-border); }
+        #btn-back { background: none; border: none; color: white; font-size: 1.8rem; margin-right: 10px; cursor: pointer; }
+        #typing-indicator { font-size: 0.7rem; color: var(--primary-light); height: 12px; }
+
+        .messages-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; padding-bottom: 90px; }
+        .msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 0.95rem; user-select: text !important; -webkit-user-select: text !important; }
+        .sent { align-self: flex-end; background: var(--primary); border-bottom-right-radius: 4px; }
+        .received { align-self: flex-start; background: rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
+
+        /* ПАНЕЛЬ ВВОДА С АНИМАЦИЕЙ */
+        .message-input-area { 
+            position: absolute; bottom: 0; left: 0; right: 0; height: 80px; 
+            padding: 10px 10px 25px 10px; display: flex; gap: 8px; background: var(--bg-dark); 
+            border-top: 1px solid var(--glass-border); z-index: 40;
+            transform: translateY(100%); opacity: 0; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; pointer-events: none;
+        }
+        .message-input-area.visible { transform: translateY(0); opacity: 1; pointer-events: all; }
+
+        @media (min-width: 769px) {
+            .sidebar { width: 320px; position: relative; transform: none !important; }
+            .chat-area { width: auto; flex: 1; position: relative; }
+            #btn-back { display: none !important; }
+            #app-screen.chat-open .sidebar { transform: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="auth-screen" class="screen">
+    <div class="auth-card">
+        <div class="auth-header"><h1>Aether</h1></div>
+        <div class="auth-form">
+            <input type="email" id="login-email" placeholder="Email">
+            <input type="password" id="login-password" placeholder="Пароль">
+            <button id="btn-login-action" class="btn-main">Войти</button>
+            <button id="btn-reg-action" class="btn-sec">Регистрация</button>
+        </div>
+    </div>
+</div>
+
+<div id="app-screen" class="screen hidden">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div style="font-weight:bold; font-size:1.2rem;">Aether</div>
+            <button id="btn-create-chat" class="btn-sec" style="width:40px;height:40px; font-size: 1.2rem;">+</button>
+        </div>
+        <div id="chat-list" class="chat-list"></div>
+        
+        <div class="user-profile-bar" id="open-settings">
+            <div class="avatar-circle">👤</div>
+            <div class="user-info">
+                <div id="profile-name" class="name">Загрузка...</div>
+                <div class="status">В сети</div>
+            </div>
+            <div class="settings-icon"></div> </div>
+    </div>
+    
+    <div class="chat-area">
+        <div class="chat-header">
+            <button id="btn-back">←</button>
+            <div><div id="chat-with-name" style="font-weight:500;">Выберите чат</div><div id="typing-indicator"></div></div>
+        </div>
+        <div id="messages-container" class="messages-container"></div>
+        <form id="message-form" class="message-input-area">
+            <input type="text" id="message-input" placeholder="Сообщение..." autocomplete="off">
+            <button type="submit" class="btn-send" style="width:45px; height:45px; border-radius:12px; background:var(--primary-light); border:none; color:white; font-weight:bold;">></button>
+        </form>
+    </div>
+</div>
+
+<div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3>Настройки</h3>
+        <input type="text" id="edit-display-name" placeholder="Твоё имя">
+        <button id="btn-save-profile" class="btn-main">Сохранить</button>
+        <button id="btn-logout" class="btn-sec" style="color:#ff5555; border-color:#ff5555;">Выйти</button>
+        <button id="btn-close-settings" class="btn-sec">Закрыть</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp, setDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAQ48D6o7kr-JgifJTwKhWx45zWoHlleZQ",
+        authDomain: "aether-1a555.firebaseapp.com",
+        projectId: "aether-1a555",
+        storageBucket: "aether-1a555.firebasestorage.app",
+        messagingSenderId: "798141171445",
+        appId: "1:798141171445:web:ba604aee38141e14d727bc"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null, activeChatId = null, unsubscribeMessages = null, typingTimeout = null;
+
+    const updateStatus = (state) => {
+        if (!currentUser) return;
+        setDoc(doc(db, "status", currentUser.email.replace(/\./g, ',')), { state, last: serverTimestamp() }, { merge: true });
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user; updateStatus("online");
+            document.getElementById('profile-name').innerText = user.displayName || user.email;
+            document.getElementById('edit-display-name').value = user.displayName || "";
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            loadChats();
+        } else {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('app-screen').classList.add('hidden');
+        }
+    });
+
+    document.getElementById('open-settings').onclick = () => document.getElementById('settings-modal').classList.remove('hidden');
+    document.getElementById('btn-close-settings').onclick = () => document.getElementById('settings-modal').classList.add('hidden');
+    
+    document.getElementById('btn-save-profile').onclick = async () => {
+        const newName = document.getElementById('edit-display-name').value;
+        if (newName) {
+            await updateProfile(auth.currentUser, { displayName: newName });
+            document.getElementById('profile-name').innerText = newName;
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+    };
+
+    document.getElementById('btn-login-action').onclick = () => signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
+    document.getElementById('btn-reg-action').onclick = () => createUserWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-password').value);
+    document.getElementById('btn-logout').onclick = () => { updateStatus("offline"); signOut(auth); location.reload(); };
+
+    document.getElementById('btn-create-chat').onclick = async () => {
+        const email = prompt("Email друга:");
+        if (!email || email === currentUser.email) return;
+        const id = [currentUser.email, email.trim()].sort().join('_').replace(/\./g, ',');
+        await setDoc(doc(db, "chats", id), { users: [currentUser.email, email.trim()], time: serverTimestamp() }, { merge: true });
+    };
+
+    function loadChats() {
+        onSnapshot(query(collection(db, "chats"), where("users", "array-contains", currentUser.email)), (snap) => {
+            const list = document.getElementById('chat-list'); list.innerHTML = '';
+            snap.forEach(d => {
+                const friend = d.data().users.find(u => u !== currentUser.email);
+                const friendId = friend.replace(/\./g, ',');
+                const item = document.createElement('div');
+                item.className = 'chat-item';
+                item.innerHTML = `<div class="chat-info"><div id="dot-${friendId}" class="status-dot"></div><strong>${friend}</strong></div><div class="btn-del">×</div>`;
+                item.onclick = () => openChat(d.id, friend);
+                item.querySelector('.btn-del').onclick = (e) => { e.stopPropagation(); deleteChatWithMessages(d.id); };
+                list.appendChild(item);
+                onSnapshot(doc(db, "status", friendId), (s) => {
+                    const dot = document.getElementById(`dot-${friendId}`);
+                    if (dot) dot.style.background = s.data()?.state === "online" ? "#2ecc71" : "#95a5a6";
+                });
+            });
+        });
+    }
+
+    async function deleteChatWithMessages(chatId) {
+        if(!confirm("Удалить чат?")) return;
+        const msgs = await getDocs(collection(db, "chats", chatId, "messages"));
+        msgs.forEach(async (m) => await deleteDoc(doc(db, "chats", chatId, "messages", m.id)));
+        await deleteDoc(doc(db, "chats", chatId));
+        if (activeChatId === chatId) closeChat();
+    }
+
+    function openChat(id, name) {
+        activeChatId = id;
+        document.getElementById('app-screen').classList.add('chat-open');
+        document.getElementById('chat-with-name').innerText = name;
+        document.getElementById('message-form').classList.add('visible');
+        if (unsubscribeMessages) unsubscribeMessages();
+        unsubscribeMessages = onSnapshot(query(collection(db, "chats", id, "messages"), orderBy("timestamp", "asc")), (snap) => {
+            const cont = document.getElementById('messages-container'); cont.innerHTML = '';
+            snap.forEach(m => {
+                const div = document.createElement('div');
+                div.className = `msg ${m.data().sender === currentUser.email ? 'sent' : 'received'}`;
+                div.innerText = m.data().text; cont.appendChild(div);
+            });
+            cont.scrollTop = cont.scrollHeight;
+        });
+        onSnapshot(collection(db, "chats", id, "typing"), (snap) => {
+            let typing = false;
+            snap.forEach(t => { if (t.id !== currentUser.email.replace(/\./g, ',') && t.data().isTyping) typing = true; });
+            document.getElementById('typing-indicator').innerText = typing ? "печатает..." : "";
+        });
+    }
+
+    function closeChat() {
+        activeChatId = null;
+        document.getElementById('app-screen').classList.remove('chat-open');
+        document.getElementById('message-form').classList.remove('visible');
+        if (unsubscribeMessages) unsubscribeMessages();
+    }
+
+    document.getElementById('btn-back').onclick = closeChat;
+
+    document.getElementById('message-input').oninput = () => {
+        if (!activeChatId) return;
+        setDoc(doc(db, "chats", activeChatId, "typing", currentUser.email.replace(/\./g, ',')), { isTyping: true });
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => setDoc(doc(db, "chats", activeChatId, "typing", currentUser.email.replace(/\./g, ',')), { isTyping: false }), 2000);
+    };
+
+    document.getElementById('message-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('message-input');
+        if (!input.value.trim() || !activeChatId) return;
+        await addDoc(collection(db, "chats", activeChatId, "messages"), { text: input.value, sender: currentUser.email, timestamp: serverTimestamp() });
+        input.value = '';
+        setDoc(doc(db, "chats", activeChatId, "typing", currentUser.email.replace(/\./g, ',')), { isTyping: false });
+    };
+</script>
+</body>
+</html>
