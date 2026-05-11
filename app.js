@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAQ48D6o7kr-JgifJTwKhWx45zWoHlleZQ",
@@ -18,107 +18,103 @@ const db = getFirestore(app);
 
 let currentUser = null;
 let activeChatId = null;
+let unsubscribeMessages = null; // Для очистки старых подписок
 
-// Элементы
-const authScreen = document.getElementById('auth-screen');
-const appScreen = document.getElementById('app-screen');
-
-// Auth Logic
-document.getElementById('btn-register').onclick = async () => {
-    const name = document.getElementById('auth-name').value;
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-pass').value;
-    if (!name || !email || !pass) return alert("Заполни все поля");
-    
-    try {
-        const res = await createUserWithEmailAndPassword(auth, email, pass);
-        await updateProfile(res.user, { displayName: name });
-    } catch (e) { alert(e.message); }
-};
-
-document.getElementById('btn-login').onclick = () => {
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-pass').value;
-    signInWithEmailAndPassword(auth, email, pass).catch(e => alert(e.message));
-};
-
-document.getElementById('btn-logout').onclick = () => signOut(auth);
-
+// --- ЛОГИКА ВХОДА ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
-        authScreen.classList.add('hidden');
-        appScreen.classList.remove('hidden');
-        document.getElementById('current-user-name').innerText = user.displayName || user.email;
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
         loadChats();
     } else {
-        authScreen.classList.remove('hidden');
-        appScreen.classList.add('hidden');
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('app-screen').classList.add('hidden');
     }
 });
 
-// Chat Logic
-async function loadChats() {
+// --- СОЗДАНИЕ ЧАТА ---
+document.getElementById('btn-create-chat').onclick = async () => {
+    const email = prompt("Введите Email друга:");
+    if (!email || email === currentUser.email) return;
+
+    const chatId = [currentUser.email, email].sort().join('_').replace(/\./g, ',');
+    
+    await setDoc(doc(db, "chats", chatId), {
+        users: [currentUser.email, email],
+        lastTimestamp: serverTimestamp()
+    }, { merge: true });
+    
+    alert("Чат создан! Выберите его в списке.");
+};
+
+// --- ЗАГРУЗКА СПИСКА ЧАТОВ ---
+function loadChats() {
     const q = query(collection(db, "chats"), where("users", "array-contains", currentUser.email));
     onSnapshot(q, (snap) => {
         const chatList = document.getElementById('chat-list');
         chatList.innerHTML = '';
-        snap.forEach(doc => {
-            const data = doc.data();
-            const other = data.users.find(u => u !== currentUser.email);
+        snap.forEach(d => {
+            const data = d.data();
+            const friendEmail = data.users.find(u => u !== currentUser.email);
             const item = document.createElement('div');
             item.className = 'chat-item';
-            item.innerHTML = `<strong>${other}</strong><br><small>${data.lastMessage || ''}</small>`;
-            item.onclick = () => openChat(doc.id, other);
+            item.innerHTML = `<strong>${friendEmail}</strong>`;
+            item.onclick = () => openChat(d.id, friendEmail);
             chatList.appendChild(item);
         });
     });
 }
 
+// --- ОТКРЫТИЕ ЧАТА ---
 function openChat(id, name) {
     activeChatId = id;
-    appScreen.classList.add('chat-open');
+    document.getElementById('app-screen').classList.add('chat-open');
     document.getElementById('active-chat').classList.remove('hidden');
     document.getElementById('no-chat-selected').classList.add('hidden');
     document.getElementById('chat-with-name').innerText = name;
 
+    // Отписываемся от сообщений предыдущего чата, если он был открыт
+    if (unsubscribeMessages) unsubscribeMessages();
+
     const q = query(collection(db, "chats", id, "messages"), orderBy("timestamp", "asc"));
-    onSnapshot(q, (snap) => {
+    
+    unsubscribeMessages = onSnapshot(q, (snap) => {
         const container = document.getElementById('messages-container');
         container.innerHTML = '';
         snap.forEach(mDoc => {
             const m = mDoc.data();
             const div = document.createElement('div');
-            div.className = `msg ${m.senderId === currentUser.uid ? 'sent' : 'received'}`;
+            div.className = `msg ${m.sender === currentUser.email ? 'sent' : 'received'}`;
             div.innerText = m.text;
             container.appendChild(div);
         });
-        container.scrollTop = container.scrollHeight;
+        container.scrollTop = container.scrollHeight; // Авто-скролл вниз
     });
 }
 
+// --- ОТПРАВКА СООБЩЕНИЯ ---
 document.getElementById('message-form').onsubmit = async (e) => {
     e.preventDefault();
     const input = document.getElementById('message-input');
-    if (!input.value || !activeChatId) return;
-    
-    const text = input.value;
-    input.value = '';
-    await addDoc(collection(db, "chats", activeChatId, "messages"), {
-        text,
-        senderId: currentUser.uid,
-        timestamp: serverTimestamp()
-    });
+    const text = input.value.trim();
+
+    if (!text || !activeChatId) return;
+
+    input.value = ''; // Очищаем сразу для скорости
+
+    try {
+        await addDoc(collection(db, "chats", activeChatId, "messages"), {
+            text: text,
+            sender: currentUser.email,
+            timestamp: serverTimestamp()
+        });
+    } catch (err) {
+        console.error("Ошибка отправки:", err);
+    }
 };
 
-document.getElementById('btn-back').onclick = () => appScreen.classList.remove('chat-open');
-
-document.getElementById('btn-create-chat').onclick = async () => {
-    const email = prompt("Email собеседника:");
-    if (!email || email === currentUser.email) return;
-    await addDoc(collection(db, "chats"), {
-        users: [currentUser.email, email],
-        lastMessage: "Новый чат",
-        timestamp: serverTimestamp()
-    });
+// Кнопка Назад
+document.getElementById('btn-back').onclick = () => {
+    document.getElementById('app-screen').classList.remove('chat-open');
 };
