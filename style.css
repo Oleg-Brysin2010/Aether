@@ -4,119 +4,73 @@
     --accent-light: #6a11cb;
     --text-white: #ffffff;
     --glass-border: rgba(255, 255, 255, 0.15);
-    --header-h: 60px; /* Фиксированная высота шапки */
+    --header-h: 60px;
+    --input-h: 70px; /* Высота нижней панели */
 }
 
-/* Общие настройки */
-* { 
-    box-sizing: border-box; 
-    margin: 0; 
-    padding: 0; 
+/* 1. ЗАПРЕТ СКРОЛЛА И ПРИБЛИЖЕНИЯ */
+html, body {
+    background: var(--bg-dark);
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Запрет скролла всей страницы */
+    position: fixed; /* Фиксируем тело сайта */
+    touch-action: none; /* Запрет жестов браузера (зум, тяга экрана) */
+    color: var(--text-white);
     font-family: 'Inter', sans-serif;
 }
 
-body, html {
-    background: #12081d;
-    height: 100%;
-    width: 100%;
-    overflow: hidden; /* Запрещаем общий скролл страницы */
-    color: var(--text-white);
+* { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent;
 }
 
+/* 2. КНОПКИ (Без белого цвета) */
 button {
     appearance: none !important;
     -webkit-appearance: none !important;
+    background: none !important;
     border: none !important;
+    outline: none !important;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: 0.2s;
 }
 
 .hidden { display: none !important; }
 
-/* АВТОРИЗАЦИЯ (Адаптивная) */
-#auth-container {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-
-.glass-card {
-    background: rgba(30, 17, 53, 0.9);
-    padding: 30px 20px;
-    border-radius: 20px;
-    border: 1px solid var(--glass-border);
-    width: 100%;
-    max-width: 350px;
-    text-align: center;
-}
-
-.auth-box input {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    background: rgba(0,0,0,0.3) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: 10px;
-    color: white !important;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--accent-light), var(--accent)) !important;
-    color: white !important;
-    padding: 12px;
-    width: 100%;
-    border-radius: 10px;
-    font-weight: 600;
-    margin-top: 10px;
-}
-
-.btn-secondary {
-    background: rgba(255,255,255,0.1) !important;
-    color: white !important;
-    padding: 10px;
-    width: 100%;
-    border-radius: 10px;
-    margin-top: 8px;
-}
-
-/* МЕССЕНДЖЕР (Главный контейнер) */
+/* 3. КОНТЕЙНЕР МЕССЕНДЖЕРА */
 #messenger-container {
     display: flex;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%; /* Занимает ровно высоту экрана */
+    position: relative;
+    touch-action: auto; /* Разрешаем касания внутри мессенджера */
 }
 
-/* САЙДБАР (Список чатов) */
+/* 4. САЙДБАР (Мобильный вариант) */
 .sidebar { 
-    width: 80px; /* По умолчанию узкий для мобилок */
+    width: 70px; 
     display: flex; 
     flex-direction: column; 
     border-right: 1px solid var(--glass-border);
-    background: rgba(0,0,0,0.3);
-}
-
-@media (min-width: 768px) {
-    .sidebar { width: 300px; } /* Широкий для компьютеров */
+    background: rgba(0,0,0,0.4);
+    z-index: 10;
 }
 
 .sidebar-header {
     height: var(--header-h);
-    padding: 0 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-bottom: 1px solid var(--glass-border);
 }
 
-.user-info { display: none; } /* Прячем email на мобилках в сайдбаре */
-
-@media (min-width: 768px) {
-    .user-info { display: block; flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
-    .sidebar-header { justify-content: space-between; }
-}
+.user-info { display: none; } /* Скрываем на мобилках */
 
 #btn-logout {
     background: rgba(255, 71, 87, 0.2) !important;
@@ -126,43 +80,40 @@ button {
     font-size: 10px;
 }
 
-/* Поиск и список чатов */
-.search-bar { padding: 10px; display: flex; flex-direction: column; gap: 5px; }
-.search-bar input { display: none; } /* Прячем инпут на мобилках */
-
-@media (min-width: 768px) {
-    .search-bar { flex-direction: row; }
-    .search-bar input { display: block; flex: 1; padding: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; color: white; }
-}
+.search-bar { padding: 10px; }
+.search-bar input { display: none; } /* Скрываем ввод email на мобилках */
 
 #btn-add-chat {
     background: var(--accent) !important;
     color: white !important;
-    width: 100%;
+    width: 40px;
     height: 40px;
     border-radius: 10px;
     font-size: 20px;
 }
 
-.chats-list { flex: 1; overflow-y: auto; }
+.chats-list { 
+    flex: 1; 
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch; /* Плавный скролл для iOS */
+}
+
 .chat-item { 
     padding: 15px 5px; 
     text-align: center; 
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    font-size: 10px;
+    font-size: 9px;
     word-break: break-all;
 }
 
-@media (min-width: 768px) {
-    .chat-item { text-align: left; padding: 15px; font-size: 14px; }
-}
-
-/* ОКНО ЧАТА */
+/* 5. ОКНО ЧАТА */
 .chat-window { 
     flex: 1; 
     display: flex; 
     flex-direction: column; 
     background: rgba(255,255,255,0.02);
+    position: relative;
+    height: 100%;
 }
 
 .chat-header {
@@ -170,11 +121,9 @@ button {
     padding: 0 15px;
     display: flex;
     align-items: center;
-    background: rgba(255,255,255,0.05);
+    background: rgba(30, 17, 53, 0.8);
     border-bottom: 1px solid var(--glass-border);
 }
-
-.chat-header h3 { font-size: 16px; font-weight: 500; }
 
 .messages-display { 
     flex: 1; 
@@ -182,57 +131,51 @@ button {
     padding: 15px; 
     display: flex; 
     flex-direction: column; 
-    gap: 10px; 
+    gap: 10px;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Сообщения */
-.msg { 
-    max-width: 85%; 
-    padding: 10px 14px; 
-    border-radius: 15px; 
-    font-size: 14px; 
-    position: relative;
-}
-
-.msg-own { 
-    align-self: flex-end; 
-    background: linear-gradient(135deg, var(--accent-light), var(--accent)) !important; 
-}
-
-.msg-other { 
-    align-self: flex-start; 
-    background: rgba(255, 255, 255, 0.1) !important; 
-    border: 1px solid var(--glass-border) !important; 
-}
-
-/* Зона ввода (Исправлено для мобилок) */
+/* 6. НИЖНЯЯ ПАНЕЛЬ (Жесткая фиксация) */
 .input-area { 
-    padding: 10px; 
+    height: var(--input-h);
+    padding: 10px 15px; 
     background: #1e1135; 
     display: flex; 
-    gap: 8px; 
+    gap: 10px; 
+    align-items: center;
     border-top: 1px solid var(--glass-border);
 }
 
 #message-input { 
     flex: 1; 
-    padding: 12px; 
-    background: rgba(0,0,0,0.3) !important; 
+    height: 45px;
+    padding: 0 15px; 
+    background: rgba(0,0,0,0.4) !important; 
     border: 1px solid var(--glass-border) !important; 
-    border-radius: 10px; 
+    border-radius: 12px; 
     color: white !important;
-    font-size: 14px;
+    font-size: 16px; /* 16px предотвращает авто-зум в iOS */
 }
 
 #btn-send {
     background: var(--accent) !important;
     color: white !important;
-    padding: 0 15px !important;
-    border-radius: 10px !important;
+    height: 45px;
+    padding: 0 20px !important;
+    border-radius: 12px !important;
     font-weight: 600 !important;
-    font-size: 13px;
 }
 
-/* Скроллбар */
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-thumb { background: var(--accent); }
+/* 7. СООБЩЕНИЯ */
+.msg { max-width: 85%; padding: 10px 14px; border-radius: 16px; font-size: 14px; }
+.msg-own { align-self: flex-end; background: linear-gradient(135deg, var(--accent-light), var(--accent)) !important; }
+.msg-other { align-self: flex-start; background: rgba(255, 255, 255, 0.1) !important; border: 1px solid var(--glass-border) !important; }
+
+/* ДЛЯ ПК (Широкий экран) */
+@media (min-width: 768px) {
+    .sidebar { width: 280px; }
+    .user-info, .search-bar input { display: block; }
+    .sidebar-header { justify-content: space-between; padding: 0 15px; }
+    .chat-item { text-align: left; padding: 15px; font-size: 14px; }
+    #btn-add-chat { width: 44px; }
+}
