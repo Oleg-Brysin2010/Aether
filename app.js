@@ -1,43 +1,38 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp, doc, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAQ48D6o7kr-JgifJTwKhWx45zWoHlleZQ",
-  authDomain: "aether-1a555.firebaseapp.com",
-  projectId: "aether-1a555",
-  storageBucket: "aether-1a555.firebasestorage.app",
-  messagingSenderId: "798141171445",
-  appId: "1:798141171445:web:ba604aee38141e14d727bc",
-  measurementId: "G-707FP0H10M"
+    apiKey: "AIzaSyAQ48D6o7kr-JgifJTwKhWx45zWoHlleZQ",
+    authDomain: "aether-1a555.firebaseapp.com",
+    projectId: "aether-1a555",
+    storageBucket: "aether-1a555.firebasestorage.app",
+    messagingSenderId: "798141171445",
+    appId: "1:798141171445:web:ba604aee38141e14d727bc",
+    measurementId: "G-707FP0H10M"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// State
 let currentUser = null;
 let activeChatId = null;
 
-// DOM Elements
+// Элементы
 const authScreen = document.getElementById('auth-screen');
 const appScreen = document.getElementById('app-screen');
-const chatListDiv = document.getElementById('chat-list');
-const messagesContainer = document.getElementById('messages-container');
-const messageForm = document.getElementById('message-form');
 
-/* --- AUTH LOGIC --- */
-
+// Auth Logic
 document.getElementById('btn-register').onclick = async () => {
+    const name = document.getElementById('auth-name').value;
     const email = document.getElementById('auth-email').value;
     const pass = document.getElementById('auth-pass').value;
-    const name = document.getElementById('auth-name').value;
+    if (!name || !email || !pass) return alert("Заполни все поля");
+    
     try {
         const res = await createUserWithEmailAndPassword(auth, email, pass);
         await updateProfile(res.user, { displayName: name });
-        // Создаем запись пользователя в БД
-        await addDoc(collection(db, "users"), { uid: res.user.uid, email, displayName: name });
     } catch (e) { alert(e.message); }
 };
 
@@ -54,100 +49,76 @@ onAuthStateChanged(auth, (user) => {
         currentUser = user;
         authScreen.classList.add('hidden');
         appScreen.classList.remove('hidden');
-        document.getElementById('current-user-name').innerText = user.displayName;
-        loadChatList();
+        document.getElementById('current-user-name').innerText = user.displayName || user.email;
+        loadChats();
     } else {
         authScreen.classList.remove('hidden');
         appScreen.classList.add('hidden');
     }
 });
 
-/* --- CHAT LOGIC --- */
-
-document.getElementById('btn-create-chat').onclick = async () => {
-    const email = prompt("Введите email собеседника:");
-    if (!email || email === currentUser.email) return alert("Некорректный email");
-
-    // Проверка на дубликат
+// Chat Logic
+async function loadChats() {
     const q = query(collection(db, "chats"), where("users", "array-contains", currentUser.email));
-    const snap = await getDocs(q);
-    const exists = snap.docs.some(doc => doc.data().users.includes(email));
-
-    if (exists) return alert("Чат уже существует");
-
-    await addDoc(collection(db, "chats"), {
-        users: [currentUser.email, email],
-        lastMessage: "Чат создан",
-        timestamp: serverTimestamp()
-    });
-};
-
-function loadChatList() {
-    const q = query(collection(db, "chats"), where("users", "array-contains", currentUser.email), orderBy("timestamp", "desc"));
-    
     onSnapshot(q, (snap) => {
-        chatListDiv.innerHTML = '';
-        snap.forEach(docSnap => {
-            const chat = docSnap.data();
-            const otherUser = chat.users.find(u => u !== currentUser.email);
-            const div = document.createElement('div');
-            div.className = 'chat-item';
-            div.innerHTML = `
-                <strong>${otherUser}</strong>
-                <p style="font-size: 0.8rem; opacity: 0.6">${chat.lastMessage}</p>
-            `;
-            div.onclick = () => openChat(docSnap.id, otherUser);
-            chatListDiv.appendChild(div);
+        const chatList = document.getElementById('chat-list');
+        chatList.innerHTML = '';
+        snap.forEach(doc => {
+            const data = doc.data();
+            const other = data.users.find(u => u !== currentUser.email);
+            const item = document.createElement('div');
+            item.className = 'chat-item';
+            item.innerHTML = `<strong>${other}</strong><br><small>${data.lastMessage || ''}</small>`;
+            item.onclick = () => openChat(doc.id, other);
+            chatList.appendChild(item);
         });
     });
 }
 
-function openChat(chatId, otherUserName) {
-    activeChatId = chatId;
-    document.getElementById('no-chat-selected').classList.add('hidden');
-    document.getElementById('active-chat').classList.remove('hidden');
-    document.getElementById('chat-with-name').innerText = otherUserName;
-    
-    // Mobile UI toggle
+function openChat(id, name) {
+    activeChatId = id;
     appScreen.classList.add('chat-open');
+    document.getElementById('active-chat').classList.remove('hidden');
+    document.getElementById('no-chat-selected').classList.add('hidden');
+    document.getElementById('chat-with-name').innerText = name;
 
-    // Load Messages
-    const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp", "asc"));
+    const q = query(collection(db, "chats", id, "messages"), orderBy("timestamp", "asc"));
     onSnapshot(q, (snap) => {
-        messagesContainer.innerHTML = '';
+        const container = document.getElementById('messages-container');
+        container.innerHTML = '';
         snap.forEach(mDoc => {
             const m = mDoc.data();
-            const time = m.timestamp ? new Date(m.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...';
-            const isMine = m.senderId === currentUser.uid;
-            
-            const mDiv = document.createElement('div');
-            mDiv.className = `msg ${isMine ? 'sent' : 'received'}`;
-            mDiv.innerHTML = `${m.text} <span class="msg-time">${time}</span>`;
-            messagesContainer.appendChild(mDiv);
+            const div = document.createElement('div');
+            div.className = `msg ${m.senderId === currentUser.uid ? 'sent' : 'received'}`;
+            div.innerText = m.text;
+            container.appendChild(div);
         });
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        container.scrollTop = container.scrollHeight;
     });
 }
 
-messageForm.onsubmit = async (e) => {
+document.getElementById('message-form').onsubmit = async (e) => {
     e.preventDefault();
-    const text = document.getElementById('message-input').value;
-    if (!text || !activeChatId) return;
-
-    document.getElementById('message-input').value = '';
+    const input = document.getElementById('message-input');
+    if (!input.value || !activeChatId) return;
     
-    // Сохраняем сообщение
+    const text = input.value;
+    input.value = '';
     await addDoc(collection(db, "chats", activeChatId, "messages"), {
         text,
         senderId: currentUser.uid,
         timestamp: serverTimestamp()
     });
-
-    // Обновляем последнее сообщение в чате
-    // В продакшене лучше использовать doc(db, "chats", activeChatId)
 };
 
-// Back button for mobile
-document.getElementById('btn-back').onclick = () => {
-    appScreen.classList.remove('chat-open');
+document.getElementById('btn-back').onclick = () => appScreen.classList.remove('chat-open');
+
+document.getElementById('btn-create-chat').onclick = async () => {
+    const email = prompt("Email собеседника:");
+    if (!email || email === currentUser.email) return;
+    await addDoc(collection(db, "chats"), {
+        users: [currentUser.email, email],
+        lastMessage: "Новый чат",
+        timestamp: serverTimestamp()
+    });
 };
