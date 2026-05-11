@@ -4,42 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aether Messenger</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="auth-container">
-        <div class="glass-card">
-            <h1 class="logo">AETHER</h1>
-            <div class="auth-box">
-                <input type="email" id="email" placeholder="Email">
-                <input type="password" id="password" placeholder="Пароль">
-                <button id="btn-login" class="btn-primary">ВОЙТИ</button>
-                <button id="btn-register" class="btn-secondary">РЕГИСТРАЦИЯ</button>
+    <div id="app">
+        <section id="auth-screen">
+            <div class="glass-card">
+                <h1 class="logo">AETHER</h1>
+                <div class="input-group">
+                    <input type="email" id="auth-email" placeholder="Email">
+                    <input type="password" id="auth-password" placeholder="Пароль">
+                </div>
+                <div class="actions">
+                    <button id="btn-login" class="btn-primary">ВОЙТИ</button>
+                    <button id="btn-register" class="btn-secondary">РЕГИСТРАЦИЯ</button>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <div id="messenger-container" class="hidden">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <button id="btn-logout">Выйти</button>
-            </div>
-            <div class="search-bar">
-                <input type="email" id="new-chat-email" placeholder="Email собеседника...">
-                <button id="btn-add-chat">+</button>
-            </div>
-            <div id="chats-list" class="chats-list"></div>
-        </div>
-        <div class="chat-window">
-            <div class="chat-header">
-                <h3 id="current-chat-title">Выберите чат</h3>
-            </div>
-            <div id="messages-display" class="messages-display"></div>
-            <div class="input-area">
-                <input type="text" id="message-input" placeholder="Сообщение...">
-                <button id="btn-send">ОТПРАВИТЬ</button>
-            </div>
-        </div>
+        <section id="chat-screen" class="hidden">
+            <aside class="sidebar" id="sidebar">
+                <header class="panel-header">
+                    <span id="user-display">Профиль</span>
+                    <button id="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+                </header>
+                <div class="search-area">
+                    <button id="btn-create-chat" class="btn-add"><i class="fas fa-plus"></i> Создать чат</button>
+                </div>
+                <div id="chats-list" class="list-container"></div>
+            </aside>
+
+            <main class="chat-main">
+                <header class="panel-header">
+                    <button id="btn-back" class="mobile-only"><i class="fas fa-arrow-left"></i></button>
+                    <h3 id="chat-title">Выберите чат</h3>
+                </header>
+                <div id="messages-container" class="messages-area"></div>
+                <div class="input-area">
+                    <input type="text" id="msg-input" placeholder="Сообщение...">
+                    <button id="btn-send"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </main>
+        </section>
     </div>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
