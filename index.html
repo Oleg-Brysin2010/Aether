@@ -2,14 +2,13 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aether // Neon Messenger</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- Экран авторизации -->
     <div id="auth-container" class="glass-card">
         <h1 class="logo">AETHER</h1>
         <div class="auth-box">
@@ -22,12 +21,10 @@
         </div>
     </div>
 
-    <!-- Основной интерфейс мессенджера -->
     <div id="messenger-container" class="hidden">
         <aside class="sidebar glass">
             <div class="sidebar-header">
-                <div class="user-profile">
-                    <div class="avatar-placeholder"></div>
+                <div class="user-info">
                     <span id="current-user-email"></span>
                 </div>
                 <button id="btn-logout" class="btn-icon">Logout</button>
@@ -38,9 +35,7 @@
                 <button id="btn-add-chat">+</button>
             </div>
 
-            <div id="chats-list" class="chats-list">
-                <!-- Чаты будут загружаться здесь -->
-            </div>
+            <div id="chats-list" class="chats-list"></div>
         </aside>
 
         <main class="chat-window glass">
@@ -48,9 +43,7 @@
                 <h3 id="active-chat-name">Выберите чат</h3>
             </div>
 
-            <div id="messages-display" class="messages-display">
-                <!-- Сообщения будут здесь -->
-            </div>
+            <div id="messages-display" class="messages-display"></div>
 
             <form id="message-form" class="input-area">
                 <input type="text" id="message-input" placeholder="Введите сообщение..." autocomplete="off">
